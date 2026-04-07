@@ -19,7 +19,7 @@ const buildDownloadUrl = (path) => {
 
 const extractFilename = (headers, fallbackName) => {
   const disposition = headers['content-disposition'] || headers['Content-Disposition'];
-  const match = disposition?.match(/filename\*?=(?:UTF-8''|")?([^\";]+)/i);
+  const match = disposition?.match(/filename\*?=(?:UTF-8''|")?([^";]+)/i);
 
   if (match?.[1]) {
     return decodeURIComponent(match[1].replace(/"/g, '').trim());

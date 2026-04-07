@@ -1,100 +1,90 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Plus } from 'lucide-react';
-import DemandeTable from '../../components/demandes/DemandeTable';
-import DemandeModal from '../../components/demandes/DemandeModal';
-import DemandeDetailsModal from '../../components/demandes/DemandeDetailsModal';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ClipboardList, RefreshCw, Send } from 'lucide-react';
+import { fetchDemandes, fetchWorkflowServices } from '../../api/demandes';
+import DashboardHeader from '../../components/dashboard/DashboardHeader';
+import StatCard from '../../components/dashboard/StatCard';
 
 const PresidentDashboard = () => {
   const [demandes, setDemandes] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [selectedDemande, setSelectedDemande] = useState(null);
+  const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const fetchData = async () => {
+  const loadStats = async () => {
+    setLoading(true);
+    setError('');
     try {
-      const demandesRes = await axios.get(`${import.meta.env.VITE_API_URL}/demandes`);
-      setDemandes(demandesRes.data);
-    } catch (err) {
-      console.error(err);
+      const [demandesRes, servicesRes] = await Promise.all([fetchDemandes(), fetchWorkflowServices()]);
+      setDemandes(demandesRes.data || []);
+      setServices(servicesRes.data || []);
+    } catch (requestError) {
+      setDemandes([]);
+      setServices([]);
+      setError(requestError.response?.data?.message || 'Impossible de charger les statistiques.');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchData();
+    loadStats();
   }, []);
 
-  const handleAction = (demande) => {
-    setSelectedDemande(demande);
-    setShowDetailsModal(true);
-  };
+  const totalByStatus = useMemo(() => {
+    return demandes.reduce((acc, demande) => {
+      acc[demande.status] = (acc[demande.status] || 0) + 1;
+      return acc;
+    }, {});
+  }, [demandes]);
 
-  const demandeStats = {
-    envoye_admin: demandes.filter((d) => d.statut === 'envoye_admin').length,
-    envoye_service: demandes.filter((d) => d.statut === 'envoye_service').length,
-    reponse_service: demandes.filter((d) => d.statut === 'reponse_service').length,
-    processed: demandes.filter((d) => d.statut === 'processed' || d.statut === 'valide_admin').length,
-  };
+  if (loading) {
+    return (
+      <div className="card-minimal flex items-center justify-center min-h-[280px]">
+        <div className="flex items-center gap-3 text-slate-500 font-semibold">
+          <RefreshCw className="animate-spin" size={18} />
+          Chargement des statistiques...
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8 font-inter">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Flux de Demandes</h1>
-          <p className="text-slate-500 text-sm mt-1">Gestion des requêtes présidentielles</p>
-        </div>
-        <button onClick={() => setIsModalOpen(true)} className="btn-minimal">
-          <Plus size={18} />
-          Nouvelle Demande
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="card-minimal">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Total</p>
-          <p className="text-2xl font-bold text-slate-900">{demandes.length}</p>
-        </div>
-        <div className="card-minimal border-l-4 border-amber-500">
-          <p className="text-[10px] font-bold text-amber-500 uppercase tracking-wider mb-2">Envoyées Admin</p>
-          <p className="text-2xl font-bold text-slate-900">{demandeStats.envoye_admin}</p>
-        </div>
-        <div className="card-minimal border-l-4 border-blue-500">
-          <p className="text-[10px] font-bold text-blue-500 uppercase tracking-wider mb-2">Retour Service</p>
-          <p className="text-2xl font-bold text-slate-900">{demandeStats.reponse_service}</p>
-        </div>
-        <div className="card-minimal border-l-4 border-emerald-500">
-          <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider mb-2">Fichiers traités</p>
-          <p className="text-2xl font-bold text-slate-900">{demandeStats.processed}</p>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-[40px] px-8 py-10 border border-slate-100 shadow-sm space-y-8">
-        <div className="flex items-center justify-between px-2">
-          <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
-            Archives de Demandes
-            <span className="text-[10px] font-black bg-slate-100 text-slate-400 px-3 py-1 rounded-full uppercase tracking-widest">
-              {loading ? '...' : `${demandes.length} Total`}
-            </span>
-          </h3>
-          <button onClick={fetchData} className="text-[10px] font-black uppercase tracking-widest text-primary-600 hover:text-primary-700 transition-colors bg-primary-50 px-4 py-2 rounded-xl">
-            Actualiser
+    <div className="space-y-8">
+      <DashboardHeader
+        label="Presidence"
+        title="Dashboard"
+        description="Statistiques uniquement. La gestion des demandes est dans la page Demandes."
+        actions={
+          <button type="button" onClick={loadStats} className="btn-minimal">
+            <RefreshCw size={16} />
+            Rafraichir
           </button>
-        </div>
-        <div className="overflow-hidden">
-          <DemandeTable demandes={demandes} showActions={true} onAction={handleAction} />
-        </div>
-      </div>
-
-      <DemandeModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSuccess={fetchData} />
-
-      <DemandeDetailsModal
-        isOpen={showDetailsModal}
-        onClose={() => setShowDetailsModal(false)}
-        demande={selectedDemande}
+        }
       />
+
+      {error && (
+        <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl font-semibold">
+          {error}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard icon={ClipboardList} label="Demandes" value={demandes.length} helper="Total" />
+        <StatCard
+          icon={Send}
+          label="En cours"
+          value={totalByStatus.sent_to_service || 0}
+          helper="En attente des services"
+          accent="from-amber-500 to-orange-500"
+        />
+        <StatCard
+          icon={Send}
+          label="Services"
+          value={services.length}
+          helper="Destinataires disponibles"
+          accent="from-sky-500 to-cyan-500"
+        />
+      </div>
     </div>
   );
 };

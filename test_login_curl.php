@@ -1,9 +1,8 @@
 <?php
-$url = 'http://localhost:8000/api/login';
+$url = 'http://localhost/Gestion-services/backend/public/api/login';
 $data = [
-    'email' => 'rh@flsh.com',
-    'password' => 'password',
-    'role' => 'service'
+    'email' => 'admin@gmail.com',
+    'password' => 'admin123',
 ];
 
 echo "Testing login to: $url\n";

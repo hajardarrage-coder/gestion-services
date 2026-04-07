@@ -1,0 +1,15 @@
+1 Install XAMPP
+2 Start Apache and MySQL
+3 Open http://localhost/phpmyadmin
+4 Create database named flsh_stats
+5 Import file database.sql
+6 Open project folder
+
+Run backend:
+php artisan serve
+
+Run frontend:
+npm run dev
+
+Open application:
+http://localhost:5173

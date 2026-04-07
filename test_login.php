@@ -1,9 +1,8 @@
 <?php
-$url = 'http://localhost:8000/api/login';
+$url = 'http://localhost/Gestion-services/backend/public/api/login';
 $data = [
     'email' => 'admin@gmail.com',
-    'password' => 123456,
-    'role' => 'admin'
+    'password' => 'admin123',
 ];
 
 $options = [

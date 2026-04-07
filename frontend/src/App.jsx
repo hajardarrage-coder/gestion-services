@@ -1,9 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
+import ForgotPassword from './pages/auth/ForgotPassword';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminDemandesPage from './pages/admin/DemandesPage';
+import AdminStudentsPage from './pages/admin/StudentsPage';
+import AdminPersonnelPage from './pages/admin/PersonnelPage';
+import AdminBuildingsPage from './pages/admin/BuildingsPage';
+import ServiceAccountsPage from './pages/admin/ServiceAccountsPage';
 import PresidentDashboard from './pages/president/PresidentDashboard';
+import PresidentDemandesPage from './pages/president/PresidentDemandesPage';
 import ServiceDashboard from './pages/service/ServiceDashboard';
+import ServiceDemandesPage from './pages/service/ServiceDemandesPage';
 import StudentDashboard from './pages/student/StudentDashboard';
 import ProtectedLayout from './components/layout/ProtectedLayout';
 import axios from 'axios';
@@ -18,56 +26,42 @@ axios.interceptors.request.use((config) => {
 });
 
 function App() {
-  const [language, setLanguage] = useState(localStorage.getItem('language') || 'fr');
-
-  const changeLanguage = (lang) => {
-    setLanguage(lang);
-    localStorage.setItem('language', lang);
-  };
-
   return (
     <Routes>
-      <Route path="/login" element={<Login language={language} changeLanguage={changeLanguage} />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
 
-      <Route
-        path="/admin/dashboard"
-        element={
-          <ProtectedLayout allowedRoles={['admin']} language={language}>
-            <AdminDashboard />
-          </ProtectedLayout>
-        }
-      />
-      <Route path="/admin/*" element={<Navigate to="/admin/dashboard" replace />} />
+      {/* Admin area */}
+      <Route element={<ProtectedLayout allowedRoles={['admin']} />}>
+        <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/demandes" element={<AdminDemandesPage />} />
+        <Route path="/admin/etudiants" element={<AdminStudentsPage />} />
+        <Route path="/admin/personnel" element={<AdminPersonnelPage />} />
+        <Route path="/admin/batiments" element={<AdminBuildingsPage />} />
+        <Route path="/admin/enseignants" element={<Navigate to="/admin/personnel" replace />} />
+        <Route path="/admin/services" element={<ServiceAccountsPage />} />
+      </Route>
 
-      <Route
-        path="/president/dashboard"
-        element={
-          <ProtectedLayout allowedRoles={['president']} language={language}>
-            <PresidentDashboard />
-          </ProtectedLayout>
-        }
-      />
-      <Route path="/president/*" element={<Navigate to="/president/dashboard" replace />} />
+      {/* President area */}
+      <Route element={<ProtectedLayout allowedRoles={['president']} />}>
+        <Route path="/president" element={<Navigate to="/president/dashboard" replace />} />
+        <Route path="/president/dashboard" element={<PresidentDashboard />} />
+        <Route path="/president/demandes" element={<PresidentDemandesPage />} />
+      </Route>
 
-      <Route
-        path="/service/dashboard"
-        element={
-          <ProtectedLayout allowedRoles={['service']} language={language}>
-            <ServiceDashboard />
-          </ProtectedLayout>
-        }
-      />
-      <Route path="/service/*" element={<Navigate to="/service/dashboard" replace />} />
+      {/* Service area */}
+      <Route element={<ProtectedLayout allowedRoles={['service']} />}>
+        <Route path="/service" element={<Navigate to="/service/dashboard" replace />} />
+        <Route path="/service/dashboard" element={<ServiceDashboard />} />
+        <Route path="/service/demandes" element={<ServiceDemandesPage />} />
+      </Route>
 
-      <Route
-        path="/student/dashboard"
-        element={
-          <ProtectedLayout allowedRoles={['student']} language={language}>
-            <StudentDashboard />
-          </ProtectedLayout>
-        }
-      />
-      <Route path="/student/*" element={<Navigate to="/student/dashboard" replace />} />
+      {/* Student area */}
+      <Route element={<ProtectedLayout allowedRoles={['student']} />}>
+        <Route path="/student" element={<Navigate to="/student/dashboard" replace />} />
+        <Route path="/student/dashboard" element={<StudentDashboard />} />
+      </Route>
 
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
@@ -76,3 +70,4 @@ function App() {
 }
 
 export default App;
+

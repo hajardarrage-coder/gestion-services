@@ -1,8 +1,8 @@
 ﻿import React from 'react';
-import { AlertCircle, Eye, Download } from 'lucide-react';
+import { AlertCircle, Eye, Download, Edit3, Trash2 } from 'lucide-react';
 import { downloadProtectedFile } from '../../utils/downloadFile';
 
-const DemandeTable = ({ demandes, onAction, showActions = false }) => {
+const DemandeTable = ({ demandes, onAction, onEdit, onDelete, showActions = false }) => {
   const handleDownload = async (event, url, filename) => {
     event.preventDefault();
 
@@ -25,6 +25,10 @@ const DemandeTable = ({ demandes, onAction, showActions = false }) => {
         return 'bg-emerald-100 text-emerald-700 border-emerald-200';
       case 'processed':
         return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+      case 'approuve':
+        return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+      case 'rejete':
+        return 'bg-red-100 text-red-700 border-red-200';
       default:
         return 'bg-slate-100 text-slate-700 border-slate-200';
     }
@@ -32,11 +36,13 @@ const DemandeTable = ({ demandes, onAction, showActions = false }) => {
 
   const getStatusLabel = (statut) => {
     const labels = {
-      envoye_admin: 'Envoye admin',
-      envoye_service: 'Envoye service',
-      reponse_service: 'Reponse service',
-      valide_admin: 'Valide admin',
+      envoye_admin: 'En attente',
+      envoye_service: 'En cours',
+      reponse_service: 'En cours',
       processed: 'Traite',
+      valide_admin: 'Termine',
+      approuve: 'Termine',
+      rejete: 'Termine',
     };
 
     return labels[statut] || statut.replace('_', ' ').charAt(0).toUpperCase() + statut.replace('_', ' ').slice(1);
@@ -58,7 +64,9 @@ const DemandeTable = ({ demandes, onAction, showActions = false }) => {
         <tbody>
           {demandes.map((demande) => (
             <tr key={demande.id} className="bg-white border-y border-slate-100 hover:border-primary-200 transition-all card-hover group shadow-sm rounded-2xl">
-              <td className="px-6 py-5 rounded-l-2xl font-bold text-slate-400">#D-{demande.id}</td>
+              <td className="px-6 py-5 rounded-l-2xl font-bold text-slate-400">
+                {demande.reference ? demande.reference : `#D-${demande.id}`}
+              </td>
               <td className="px-6 py-5">
                 <p className="font-bold text-slate-900 group-hover:text-primary-600 transition-colors uppercase tracking-tight">{demande.titre}</p>
                 <p className="text-xs text-slate-500 mt-1 line-clamp-1">{demande.description}</p>
@@ -87,6 +95,26 @@ const DemandeTable = ({ demandes, onAction, showActions = false }) => {
                         title="Telecharger fichier traite"
                       >
                         <Download size={18} />
+                      </button>
+                    )}
+                    {onEdit && (
+                      <button
+                        type="button"
+                        onClick={() => onEdit(demande)}
+                        className="p-2.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all"
+                        title="Modifier la demande"
+                      >
+                        <Edit3 size={18} />
+                      </button>
+                    )}
+                    {onDelete && (
+                      <button
+                        type="button"
+                        onClick={() => onDelete(demande)}
+                        className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                        title="Supprimer la demande"
+                      >
+                        <Trash2 size={18} />
                       </button>
                     )}
                     <button

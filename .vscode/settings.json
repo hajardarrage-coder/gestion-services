@@ -1,8 +1,13 @@
 {
-    "php.validate.executablePath": "php",
-    "php.suggest.basic": false,
-    "intelephense.environment.phpVersion": "8.2.0",
-    "php.problems.exclude": {
-        "vendor": true
-    }
+  "intelephense.environment.documentRoot": "backend",
+  "intelephense.environment.composerJson": "backend/composer.json",
+  "intelephense.environment.includePaths": [
+    "backend/vendor"
+  ],
+  "intelephense.files.exclude": [
+    "**/.git/**",
+    "**/node_modules/**",
+    "**/storage/**",
+    "**/public/**"
+  ]
 }

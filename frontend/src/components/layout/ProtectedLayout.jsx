@@ -1,10 +1,10 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 import { useAuth } from '../../context/AuthContext';
 
-const ProtectedLayout = ({ children, allowedRoles, language }) => {
+const ProtectedLayout = ({ allowedRoles, language }) => {
   const { user, loading } = useAuth();
   const token = localStorage.getItem('token');
 
@@ -35,13 +35,17 @@ const ProtectedLayout = ({ children, allowedRoles, language }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
+    <div className="min-h-screen font-sans text-slate-900">
       <Sidebar />
-      <div className="md:pl-64 flex flex-col min-h-screen">
+      <div className="md:pl-72 flex flex-col min-h-screen">
         <Navbar title={getTitle()} />
-        <main className="flex-1 p-6 md:p-8 xl:p-10">
-          <div className="max-w-7xl mx-auto w-full">
-            {children}
+        <main className="flex-1 page-shell pt-8 pb-12">
+          <div className="relative max-w-[1200px] mx-auto w-full">
+            <div className="pointer-events-none absolute -top-24 right-0 h-64 w-64 rounded-full bg-indigo-200/40 blur-3xl" />
+            <div className="pointer-events-none absolute top-40 -left-20 h-72 w-72 rounded-full bg-sky-200/35 blur-3xl" />
+            <div className="relative z-10 animate-slide-up">
+              <Outlet />
+            </div>
           </div>
         </main>
       </div>

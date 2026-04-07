@@ -185,6 +185,13 @@ const DemandeModal = ({ isOpen, onClose, onSuccess }) => {
               Annuler
             </button>
             <button
+              type="button"
+              onClick={resetForm}
+              className="rounded-lg border border-amber-200 px-4 py-2 font-semibold text-amber-700 hover:bg-amber-50"
+            >
+              Effacer
+            </button>
+            <button
               type="submit"
               disabled={loading || success}
               className="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-lg"

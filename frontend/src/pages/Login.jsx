@@ -1,75 +1,39 @@
-﻿import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+﻿import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, UserCircle, Loader2, ShieldCheck, Layout } from 'lucide-react';
+import { Mail, Lock, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import logo from '../assets/university_logo.png';
 
 const Login = () => {
+  const { state } = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('admin');
-  const SERVICE_LOAD_ERROR = 'Impossible de charger les services';
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [services, setServices] = useState([]);
-  const [servicesLoading, setServicesLoading] = useState(false);
-  const [selectedServiceId, setSelectedServiceId] = useState('');
+  const showDevCredentialHint = import.meta.env.DEV;
 
   const { login } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (role !== 'service') {
-      setSelectedServiceId('');
-      setError('');
-      return;
-    }
-
-    if (services.length > 0) {
-      return;
-    }
-
-    const fetchServices = async () => {
-      setServicesLoading(true);
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/services`);
-        setServices(Array.isArray(response.data) ? response.data : []);
-        setError((prev) => (prev === SERVICE_LOAD_ERROR ? '' : prev));
-      } catch (err) {
-        console.error('Erreur lors du chargement des services:', err);
-        setError(SERVICE_LOAD_ERROR);
-      } finally {
-        setServicesLoading(false);
-      }
-    };
-
-    fetchServices();
-  }, [role, services.length]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setLoading(true);
     setError('');
 
-    if (role === 'service' && !selectedServiceId) {
-      setError('Choisir un service');
+    const normalizedEmail = email.trim();
+
+    if (!normalizedEmail || !password) {
+      setError('Email et mot de passe sont requis.');
       setLoading(false);
       return;
     }
 
     try {
-      const payload = {
-        email,
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/login`, {
+        email: normalizedEmail,
         password,
-        role,
-      };
-
-      if (role === 'service') {
-        payload.service_id = Number(selectedServiceId);
-      }
-
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/login`, payload);
+      });
       const { user, token } = response.data;
 
       login(user);
@@ -77,130 +41,116 @@ const Login = () => {
       localStorage.setItem('token', token);
 
       navigate(`/${user.role}/dashboard`);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Identifiants invalides');
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'Identifiants invalides');
     } finally {
       setLoading(false);
     }
   };
 
-  const roles = [
-    { id: 'admin', label: 'Administrateur', icon: ShieldCheck },
-    { id: 'president', label: 'President', icon: UserCircle },
-    { id: 'service', label: 'Service', icon: Layout },
-  ];
-
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 font-inter">
-      <div className="max-w-[400px] w-full">
-        <div className="card-minimal">
-          <div className="text-center mb-8">
-            <img src={logo} alt="USMBA Logo" className="h-16 mx-auto mb-4 object-contain" />
-            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">La faculte Des lettres et des sciences Humaines</h2>
-            <p className="text-slate-400 text-sm mt-1">Authentification centralisee</p>
-          </div>
+    <div className="min-h-screen flex items-center justify-center px-6 py-12 font-inter">
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute -top-32 -right-10 h-80 w-80 rounded-full bg-blue-200/30 blur-3xl" />
+        <div className="absolute top-1/3 -left-24 h-72 w-72 rounded-full bg-sky-200/30 blur-3xl" />
+        <div className="absolute bottom-0 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-indigo-200/30 blur-3xl" />
+      </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-lg text-xs font-bold border border-red-100 text-center">
-                {error}
+      <div className="max-w-4xl w-full flex justify-center">
+        <div className="w-full max-w-[480px]">
+          <div className="card-minimal rounded-[32px] p-10 shadow-[0_22px_60px_rgba(15,23,42,0.14)]">
+            <div className="text-center mb-8 space-y-3">
+              <div className="mx-auto h-16 w-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
+                <img src={logo} alt="USMBA Logo" className="h-12 w-12 object-contain drop-shadow" />
               </div>
-            )}
-
-            <div className="space-y-3">
-              <div className="relative">
-                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  className="input-minimal pl-10"
-                  placeholder="admin@gmail.com / president@gmail.com / service@gmail.com"
-                  required
-                />
-              </div>
-
-              <div className="relative">
-                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  className="input-minimal pl-10"
-                  placeholder="Mot de passe"
-                  required
-                />
-              </div>
-
-              <div className="flex justify-end px-1">
-                <button
-                  type="button"
-                  onClick={() => alert('Fonctionnalite de reinitialisation via email en cours de deploiement.')}
-                  className="text-[10px] font-bold text-primary-600 hover:text-primary-700 uppercase tracking-wider"
-                >
-                  Mot de passe oublie ?
-                </button>
+              <div>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Connexion sécurisée</h2>
+                <p className="text-slate-500 text-sm mt-1">Accédez à votre espace personnalisé</p>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Profil utilisateur</label>
-              <div className="grid grid-cols-1 gap-2">
-                {roles.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setRole(item.id)}
-                    className={`
-                      px-3 py-3 rounded-lg border transition-all flex items-center gap-3
-                      ${role === item.id
-                        ? 'bg-slate-900 border-slate-900 text-white'
-                        : 'bg-white border-slate-200 text-slate-500 hover:border-primary-600 hover:text-primary-600'}
-                    `}
-                  >
-                    <item.icon size={16} />
-                    <span className="text-[10px] font-bold uppercase tracking-tight">{item.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {state?.passwordResetSuccess && (
+                <div className="bg-emerald-50 text-emerald-700 p-3 rounded-lg text-xs font-bold border border-emerald-100 text-center">
+                  {state.passwordResetSuccess}
+                </div>
+              )}
 
-            {role === 'service' && (
-              <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Selectionner un service</label>
+              {error && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-xs font-bold border border-red-100 text-center">
+                  {error}
+                </div>
+              )}
+              {showDevCredentialHint && error === 'Identifiants invalides' && (
+                <div className="bg-sky-50 text-sky-700 p-3 rounded-lg text-xs font-semibold border border-sky-100 text-center">
+                  Compte test: admin@gmail.com / admin123
+                </div>
+              )}
+
+              <div className="space-y-3">
                 <div className="relative">
-                  <Layout size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <select
-                    value={selectedServiceId}
-                    onChange={(event) => setSelectedServiceId(event.target.value)}
-                    className="input-minimal pl-10 appearance-none bg-white cursor-pointer"
-                    disabled={servicesLoading}
+                  <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    autoComplete="username"
+                    className="input-minimal pl-10"
+                    placeholder="Votre email institutionnel"
                     required
+                  />
+                </div>
+
+                <div className="relative">
+                  <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    autoComplete="current-password"
+                    className="input-minimal pl-10"
+                    placeholder="Mot de passe"
+                    required
+                  />
+                </div>
+
+                <div className="flex justify-between items-center px-1 text-[11px] font-semibold text-slate-500">
+                  <span>Accès réservé aux personnels autorisés</span>
+                  <Link
+                    to="/forgot-password"
+                    className="font-bold text-primary-600 hover:text-primary-700 uppercase tracking-wider"
                   >
-                    <option value="">{servicesLoading ? 'Chargement...' : 'Choisir un service'}</option>
-                    {services.map((service) => (
-                      <option key={service.id} value={service.id}>
-                        {service.name}
-                      </option>
-                    ))}
-                  </select>
+                    Mot de passe oublié ?
+                  </Link>
                 </div>
               </div>
-            )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-minimal w-full mt-4"
-            >
-              {loading ? <Loader2 className="animate-spin" size={18} /> : 'Se connecter'}
-            </button>
-          </form>
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn-minimal w-full mt-2"
+              >
+                {loading ? <Loader2 className="animate-spin" size={18} /> : 'Se connecter'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('');
+                  setPassword('');
+                  setError('');
+                }}
+                className="w-full rounded-xl border border-amber-200 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-amber-700 hover:bg-amber-50"
+                disabled={loading}
+              >
+                Effacer
+              </button>
+            </form>
 
-          <div className="mt-8 text-center pt-6 border-t border-slate-100">
-            <p className="text-slate-400 text-[9px] font-bold uppercase tracking-widest">
-              Faculte des lettres et des sciences humaines
-            </p>
+            <div className="mt-8 text-center pt-6 border-t border-slate-100">
+              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.24em]">
+                Université Sidi Mohamed Ben Abdellah
+              </p>
+            </div>
           </div>
         </div>
       </div>
